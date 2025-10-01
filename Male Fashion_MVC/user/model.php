@@ -24,7 +24,7 @@ class Model
             echo
                 "<script>
             alert ('Account Created...!');
-            window.location.href = 'shop.php'
+            window.location.href = 'sign_in'
             </script>";
         }
     }
