@@ -1,0 +1,24 @@
+[
+    {
+        "id": 1,
+        "post_id": 4,
+        "author": "Kaushal Mistry",
+        "body": "Good Book",
+        "created_at": "2025-10-20T03:24:55+02:00",
+        "updated_at": "2025-10-20T03:35:14+02:00"
+    },
+    {
+        "id": 2,
+        "post_id": 4,
+        "author": "Jigna Rajgor Joshi",
+        "body": "Good Book",
+        "created_at": "2025-10-20T03:35:39+02:00"
+    },
+    {
+        "id": 3,
+        "post_id": 6,
+        "author": "Kumud Thakor",
+        "body": "Testing Done",
+        "created_at": "2025-10-20T03:44:43+02:00"
+    }
+]

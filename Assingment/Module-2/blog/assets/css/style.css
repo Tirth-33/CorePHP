@@ -1,0 +1,4 @@
+/* small custom styles */
+body { padding-bottom: 40px; }
+.card-text img { max-width:100%; height:auto; }
+footer { margin-top: 40px; }
