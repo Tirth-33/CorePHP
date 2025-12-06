@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Registration with Email Confirmation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; }
+        .container { max-width: 600px; margin: 50px auto; padding: 20px; }
+        .registration-form { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .registration-form h1 { text-align: center; color: #333; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        .form-group input { width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .register-btn { width: 100%; padding: 15px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        .register-btn:hover { background: #5a6fd8; }
+        .register-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .demo-note { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #856404; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 8px; margin-top: 20px; display: none; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 8px; margin-top: 20px; display: none; }
+        .loading { text-align: center; padding: 20px; color: #666; display: none; }
+        .email-preview { background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
+        .email-preview h3 { color: #333; margin-bottom: 15px; }
+        .email-content { background: white; padding: 20px; border-radius: 5px; border-left: 4px solid #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="registration-form">
+            <h1>📧 User Registration</h1>
+            <p class="subtitle">Register your account and receive email confirmation</p>
+            
+            <div class="demo-note">
+                <strong>Demo Mode:</strong> This version simulates email sending. For real emails, configure SendGrid/Mailgun API keys in the backend.
+            </div>
+
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+
+                <button type="submit" class="register-btn" id="registerBtn">Register Account</button>
+            </form>
+
+            <div id="loading" class="loading">
+                Registering account and sending confirmation email...
+            </div>
+
+            <div id="success" class="success"></div>
+            <div id="error" class="error"></div>
+
+            <div id="emailPreview" class="email-preview">
+                <h3>📧 Email Confirmation Preview</h3>
+                <div class="email-content">
+                    <h2 style="color: #667eea; margin-bottom: 20px;">Welcome to Our Platform!</h2>
+                    <p>Hi <span id="previewName"></span>,</p>
+                    <p style="margin: 15px 0;">Thank you for registering with us! Please click the button below to confirm your email address:</p>
+                    <div style="text-align: center; margin: 25px 0;">
+                        <a href="#" style="background: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Confirm Email Address</a>
+                    </div>
+                    <p style="margin: 15px 0; font-size: 14px; color: #666;">If you didn't create this account, please ignore this email.</p>
+                    <p style="margin-top: 20px;">Best regards,<br>The Team</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {
+                fullName: formData.get('fullName'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                confirmPassword: formData.get('confirmPassword')
+            };
+
+            // Validate passwords match
+            if (data.password !== data.confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            // Validate email format
+            if (!isValidEmail(data.email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+
+            showLoading(true);
+            hideMessages();
+
+            try {
+                const response = await fetch('register.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showSuccess(`Registration successful! Confirmation email sent to ${data.email}`);
+                    showEmailPreview(data.fullName);
+                    document.getElementById('registrationForm').reset();
+                } else {
+                    showError(result.error || 'Registration failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('registerBtn').disabled = show;
+        }
+
+        function hideMessages() {
+            document.getElementById('success').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('emailPreview').style.display = 'none';
+        }
+
+        function showEmailPreview(name) {
+            document.getElementById('previewName').textContent = name;
+            document.getElementById('emailPreview').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

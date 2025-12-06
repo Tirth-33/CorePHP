@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Gateway Checkout</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .checkout-container { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+        .header { background: #333; color: white; padding: 30px; text-align: center; }
+        .header h1 { margin-bottom: 10px; }
+        .content { display: flex; flex-wrap: wrap; }
+        .order-summary { flex: 1; min-width: 300px; padding: 30px; background: #f8f9fa; }
+        .payment-section { flex: 1; min-width: 300px; padding: 30px; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #e9ecef; }
+        .remove-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .add-item-section { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px dashed #dee2e6; }
+        .product-info h4 { color: #333; margin-bottom: 5px; }
+        .product-info p { color: #666; font-size: 14px; }
+        .product-price { font-weight: bold; color: #333; }
+        .total-section { margin-top: 20px; padding-top: 20px; border-top: 2px solid #dee2e6; }
+        .total-row { display: flex; justify-content: space-between; margin: 10px 0; }
+        .total-row.final { font-size: 18px; font-weight: bold; color: #333; }
+        .payment-methods { margin-bottom: 30px; }
+        .payment-methods h3 { margin-bottom: 20px; color: #333; }
+        .payment-option { margin-bottom: 15px; }
+        .payment-btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-bottom: 10px; transition: all 0.3s; }
+        .stripe-btn { background: #635bff; color: white; }
+        .stripe-btn:hover { background: #5a52e8; }
+        .paypal-btn { background: #0070ba; color: white; }
+        .paypal-btn:hover { background: #005ea6; }
+        .demo-note { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #856404; font-size: 14px; }
+        .success-message { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
+        .loading { text-align: center; padding: 20px; color: #666; display: none; }
+        @media (max-width: 768px) {
+            .content { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="checkout-container">
+            <div class="header">
+                <h1>💳 Secure Checkout</h1>
+                <p>Complete your purchase with PayPal or Stripe</p>
+            </div>
+
+            <div class="content">
+                <div class="order-summary">
+                    <h3>Order Summary</h3>
+                    
+                    <div class="add-item-section">
+                        <input type="text" id="itemName" placeholder="Item name" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="text" id="itemDescription" placeholder="Description" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="number" id="itemPrice" placeholder="Price (₹)" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px;">
+                        <button onclick="addItem()" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 10px 0;">Add Item</button>
+                    </div>
+                    
+                    <div id="orderItems"></div>
+
+                    <div class="total-section">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span>₹13,527</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Tax (8%):</span>
+                            <span>₹1,082</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Shipping:</span>
+                            <span>Free</span>
+                        </div>
+                        <div class="total-row final">
+                            <span>Total:</span>
+                            <span id="totalAmount">₹14,609</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-section">
+                    <div class="demo-note">
+                        <strong>Demo Mode:</strong> This simulates payment processing. For real payments, configure PayPal/Stripe API keys.
+                    </div>
+
+                    <div class="payment-methods">
+                        <h3>Choose Payment Method</h3>
+                        
+                        <div class="payment-option">
+                            <button class="payment-btn stripe-btn" onclick="payWithStripe()">
+                                💳 Pay with Stripe - ₹14,609
+                            </button>
+                        </div>
+
+                        <div class="payment-option">
+                            <button class="payment-btn paypal-btn" onclick="payWithPayPal()">
+                                🅿️ Pay with PayPal - ₹14,609
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="loading" class="loading">
+                        Processing payment...
+                    </div>
+
+                    <div id="successMessage" class="success-message">
+                        <h4>✅ Payment Successful!</h4>
+                        <p>Thank you for your purchase. Your order has been confirmed.</p>
+                        <p><strong>Transaction ID:</strong> <span id="transactionId"></span></p>
+                        <p><strong>Amount:</strong> ₹14,609</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stripe SDK -->
+    <script src="https://js.stripe.com/v3/"></script>
+    
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=YOUR_PAYPAL_CLIENT_ID&currency=USD"></script>
+
+    <script>
+        // Stripe configuration - will be null in demo mode
+        const stripe = null; // Set to null for demo mode
+        
+        // PayPal configuration
+        let paypalButtons = null;
+
+        // Initialize PayPal buttons
+        function initializePayPal() {
+            if (typeof paypal !== 'undefined') {
+                paypalButtons = paypal.Buttons({
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    value: '14609.00'
+                                }
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        return actions.order.capture().then(function(details) {
+                            showSuccess('paypal_' + details.id);
+                        });
+                    }
+                });
+            }
+        }
+
+        // Stripe payment handler
+        async function payWithStripe() {
+            showLoading(true);
+
+            // Check if Stripe is configured
+            if (!stripe || stripe._keyMode === 'test' && stripe._key === 'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY') {
+                // Demo mode - simulate Stripe payment
+                setTimeout(() => {
+                    showLoading(false);
+                    showSuccess('stripe_demo_' + generateTransactionId());
+                }, 2000);
+                return;
+            }
+
+            try {
+                // Create payment intent on server
+                const response = await fetch('process_payment.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        payment_method: 'stripe',
+                        amount: 1460900 // Amount in paise (₹14,609)
+                    })
+                });
+
+                const { client_secret } = await response.json();
+
+                // Confirm payment with Stripe
+                const result = await stripe.confirmCardPayment(client_secret, {
+                    payment_method: {
+                        card: {
+                            // This would be a real card element in production
+                        }
+                    }
+                });
+
+                if (result.error) {
+                    alert('Payment failed: ' + result.error.message);
+                } else {
+                    showSuccess(result.paymentIntent.id);
+                }
+            } catch (error) {
+                alert('Payment error: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // PayPal payment handler
+        function payWithPayPal() {
+            showLoading(true);
+
+            // Check if PayPal is configured
+            if (!paypalButtons) {
+                // Demo mode - simulate PayPal payment
+                setTimeout(() => {
+                    showLoading(false);
+                    showSuccess('paypal_demo_' + generateTransactionId());
+                }, 2000);
+                return;
+            }
+
+            // In real implementation, this would trigger PayPal checkout
+            paypalButtons.render('#paypal-button-container');
+        }
+
+        // Show loading state
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            
+            // Disable payment buttons during processing
+            const buttons = document.querySelectorAll('.payment-btn');
+            buttons.forEach(btn => btn.disabled = show);
+        }
+
+        // Show success message
+        function showSuccess(transactionId) {
+            document.getElementById('transactionId').textContent = transactionId;
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // Hide payment buttons
+            document.querySelector('.payment-methods').style.display = 'none';
+        }
+
+        // Generate demo transaction ID
+        function generateTransactionId() {
+            return Math.random().toString(36).substr(2, 9).toUpperCase();
+        }
+
+        // Order management
+        let orderItems = [];
+        
+        function addItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const description = document.getElementById('itemDescription').value.trim();
+            const price = parseFloat(document.getElementById('itemPrice').value);
+            
+            if (!name || !price || price <= 0) {
+                alert('Please enter valid item name and price');
+                return;
+            }
+            
+            const item = {
+                id: Date.now(),
+                name: name,
+                description: description || 'No description',
+                price: price
+            };
+            
+            orderItems.push(item);
+            updateOrderDisplay();
+            
+            // Clear form
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemDescription').value = '';
+            document.getElementById('itemPrice').value = '';
+        }
+        
+        function removeItem(id) {
+            orderItems = orderItems.filter(item => item.id !== id);
+            updateOrderDisplay();
+        }
+        
+        function updateOrderDisplay() {
+            const container = document.getElementById('orderItems');
+            let html = '';
+            
+            orderItems.forEach(item => {
+                html += `
+                    <div class="product-item">
+                        <div class="product-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.description}</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="product-price">₹${item.price.toLocaleString()}</div>
+                            <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            updateTotals();
+        }
+        
+        function updateTotals() {
+            const subtotal = orderItems.reduce((sum, item) => sum + item.price, 0);
+            const tax = subtotal * 0.08;
+            const total = subtotal + tax;
+            
+            document.querySelector('.total-section').innerHTML = `
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span>₹${subtotal.toLocaleString()}</span>
+                </div>
+                <div class="total-row">
+                    <span>Tax (8%):</span>
+                    <span>₹${Math.round(tax).toLocaleString()}</span>
+                </div>
+                <div class="total-row">
+                    <span>Shipping:</span>
+                    <span>Free</span>
+                </div>
+                <div class="total-row final">
+                    <span>Total:</span>
+                    <span id="totalAmount">₹${Math.round(total).toLocaleString()}</span>
+                </div>
+            `;
+            
+            // Update payment buttons
+            const totalFormatted = `₹${Math.round(total).toLocaleString()}`;
+            document.querySelector('.stripe-btn').innerHTML = `💳 Pay with Stripe - ${totalFormatted}`;
+            document.querySelector('.paypal-btn').innerHTML = `🅿️ Pay with PayPal - ${totalFormatted}`;
+        }
+        
+        // Initialize on page load
+        window.onload = function() {
+            initializePayPal();
+            updateOrderDisplay(); // Initialize empty order
+        };
+    </script>
+</body>
+</html>

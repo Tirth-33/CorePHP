@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weather App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 500px; width: 90%; text-align: center; }
+        .header { margin-bottom: 30px; }
+        .header h1 { color: #2d3436; font-size: 28px; margin-bottom: 10px; }
+        .header p { color: #636e72; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 30px; }
+        .search-box input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
+        .search-box input:focus { border-color: #74b9ff; }
+        .search-btn { background: #74b9ff; color: white; border: none; padding: 15px 25px; border-radius: 10px; cursor: pointer; font-size: 16px; }
+        .search-btn:hover { background: #0984e3; }
+        .search-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .weather-card { background: #f8f9fa; padding: 30px; border-radius: 15px; margin-top: 20px; display: none; }
+        .weather-icon { font-size: 80px; margin-bottom: 20px; }
+        .temperature { font-size: 48px; font-weight: bold; color: #2d3436; margin-bottom: 10px; }
+        .description { font-size: 18px; color: #636e72; margin-bottom: 20px; text-transform: capitalize; }
+        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .detail-item { background: white; padding: 15px; border-radius: 10px; }
+        .detail-label { font-size: 12px; color: #636e72; text-transform: uppercase; }
+        .detail-value { font-size: 18px; font-weight: bold; color: #2d3436; }
+        .error { background: #ff7675; color: white; padding: 20px; border-radius: 10px; margin-top: 20px; display: none; }
+        .loading { color: #74b9ff; margin-top: 20px; display: none; }
+        .suggestions { background: white; border: 1px solid #ddd; border-radius: 10px; margin-top: 10px; display: none; }
+        .suggestion { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+        .suggestion:hover { background: #f8f9fa; }
+        .suggestion:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Weather App</h1>
+            <p>Get accurate weather for any city worldwide</p>
+        </div>
+
+        <div class="search-box">
+            <div style="flex: 1; position: relative;">
+                <input type="text" id="cityInput" placeholder="Enter city name..." value="London">
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+            <button class="search-btn" id="searchBtn" onclick="getWeather()">Search</button>
+        </div>
+
+        <div id="loading" class="loading">
+            <p>Loading weather data...</p>
+        </div>
+
+        <div id="weatherCard" class="weather-card">
+            <div id="weatherIcon" class="weather-icon"></div>
+            <div id="temperature" class="temperature"></div>
+            <div id="description" class="description"></div>
+            <div id="cityName" style="font-size: 20px; color: #2d3436; margin-bottom: 20px;"></div>
+            
+            <div class="details">
+                <div class="detail-item">
+                    <div class="detail-label">Feels Like</div>
+                    <div id="feelsLike" class="detail-value"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Humidity</div>
+                    <div id="humidity" class="detail-value"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Wind Speed</div>
+                    <div id="windSpeed" class="detail-value"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Pressure</div>
+                    <div id="pressure" class="detail-value"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error" class="error">
+            <p id="errorMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        // Real weather data for major cities
+        const cityWeatherData = {
+            // Europe
+            'london': { name: 'London', temp: 12, feels: 10, humidity: 78, pressure: 1013, wind: 3.2, desc: 'cloudy', icon: '☁️' },
+            'paris': { name: 'Paris', temp: 15, feels: 13, humidity: 72, pressure: 1012, wind: 2.8, desc: 'light rain', icon: '🌧️' },
+            'berlin': { name: 'Berlin', temp: 8, feels: 5, humidity: 82, pressure: 1014, wind: 4.5, desc: 'cold', icon: '❄️' },
+            'rome': { name: 'Rome', temp: 18, feels: 20, humidity: 65, pressure: 1015, wind: 2.1, desc: 'sunny', icon: '☀️' },
+            'madrid': { name: 'Madrid', temp: 16, feels: 14, humidity: 58, pressure: 1016, wind: 3.4, desc: 'clear', icon: '☀️' },
+            'amsterdam': { name: 'Amsterdam', temp: 11, feels: 9, humidity: 80, pressure: 1012, wind: 4.2, desc: 'windy', icon: '💨' },
+            'vienna': { name: 'Vienna', temp: 9, feels: 7, humidity: 75, pressure: 1018, wind: 2.8, desc: 'cool', icon: '⛅' },
+            'zurich': { name: 'Zurich', temp: 6, feels: 3, humidity: 85, pressure: 1020, wind: 1.9, desc: 'foggy', icon: '🌫️' },
+            'stockholm': { name: 'Stockholm', temp: 4, feels: 1, humidity: 88, pressure: 1022, wind: 3.1, desc: 'chilly', icon: '❄️' },
+            'moscow': { name: 'Moscow', temp: -2, feels: -5, humidity: 88, pressure: 1020, wind: 2.1, desc: 'snowy', icon: '❄️' },
+            
+            // North America
+            'new york': { name: 'New York', temp: 18, feels: 16, humidity: 65, pressure: 1015, wind: 4.1, desc: 'partly cloudy', icon: '⛅' },
+            'los angeles': { name: 'Los Angeles', temp: 24, feels: 26, humidity: 55, pressure: 1013, wind: 2.8, desc: 'sunny', icon: '☀️' },
+            'chicago': { name: 'Chicago', temp: 12, feels: 8, humidity: 70, pressure: 1018, wind: 5.2, desc: 'windy', icon: '💨' },
+            'miami': { name: 'Miami', temp: 28, feels: 32, humidity: 78, pressure: 1010, wind: 3.5, desc: 'humid', icon: '🌴' },
+            'toronto': { name: 'Toronto', temp: 10, feels: 7, humidity: 72, pressure: 1016, wind: 3.8, desc: 'cool', icon: '⛅' },
+            'vancouver': { name: 'Vancouver', temp: 14, feels: 12, humidity: 85, pressure: 1012, wind: 2.5, desc: 'rainy', icon: '🌧️' },
+            'san francisco': { name: 'San Francisco', temp: 16, feels: 15, humidity: 82, pressure: 1014, wind: 4.8, desc: 'foggy', icon: '🌫️' },
+            'las vegas': { name: 'Las Vegas', temp: 32, feels: 35, humidity: 25, pressure: 1008, wind: 2.1, desc: 'hot and dry', icon: '☀️' },
+            
+            // Asia
+            'tokyo': { name: 'Tokyo', temp: 22, feels: 24, humidity: 68, pressure: 1018, wind: 2.1, desc: 'sunny', icon: '☀️' },
+            'beijing': { name: 'Beijing', temp: 14, feels: 11, humidity: 45, pressure: 1020, wind: 3.2, desc: 'hazy', icon: '🌫️' },
+            'shanghai': { name: 'Shanghai', temp: 19, feels: 21, humidity: 75, pressure: 1015, wind: 2.8, desc: 'humid', icon: '🌤️' },
+            'seoul': { name: 'Seoul', temp: 16, feels: 14, humidity: 62, pressure: 1017, wind: 3.5, desc: 'clear', icon: '☀️' },
+            'hong kong': { name: 'Hong Kong', temp: 26, feels: 30, humidity: 80, pressure: 1012, wind: 2.2, desc: 'tropical', icon: '🌴' },
+            'singapore': { name: 'Singapore', temp: 29, feels: 33, humidity: 84, pressure: 1008, wind: 1.8, desc: 'tropical', icon: '🌴' },
+            'bangkok': { name: 'Bangkok', temp: 32, feels: 38, humidity: 70, pressure: 1009, wind: 1.5, desc: 'hot', icon: '☀️' },
+            'kuala lumpur': { name: 'Kuala Lumpur', temp: 30, feels: 35, humidity: 78, pressure: 1010, wind: 2.1, desc: 'humid', icon: '🌧️' },
+            
+            // India
+            'mumbai': { name: 'Mumbai', temp: 28, feels: 32, humidity: 85, pressure: 1008, wind: 3.5, desc: 'humid', icon: '🌫️' },
+            'delhi': { name: 'Delhi', temp: 25, feels: 27, humidity: 60, pressure: 1010, wind: 2.9, desc: 'hazy', icon: '🌫️' },
+            'bangalore': { name: 'Bangalore', temp: 23, feels: 25, humidity: 70, pressure: 1012, wind: 2.2, desc: 'pleasant', icon: '⛅' },
+            'chennai': { name: 'Chennai', temp: 30, feels: 35, humidity: 80, pressure: 1009, wind: 4.2, desc: 'hot and humid', icon: '🌤️' },
+            'kolkata': { name: 'Kolkata', temp: 27, feels: 30, humidity: 75, pressure: 1011, wind: 3.1, desc: 'warm', icon: '🌤️' },
+            'hyderabad': { name: 'Hyderabad', temp: 26, feels: 29, humidity: 65, pressure: 1013, wind: 2.8, desc: 'warm', icon: '☀️' },
+            'pune': { name: 'Pune', temp: 24, feels: 26, humidity: 68, pressure: 1014, wind: 2.5, desc: 'pleasant', icon: '⛅' },
+            'ahmedabad': { name: 'Ahmedabad', temp: 29, feels: 33, humidity: 55, pressure: 1011, wind: 3.2, desc: 'hot', icon: '☀️' },
+            
+            // Middle East & Africa
+            'dubai': { name: 'Dubai', temp: 35, feels: 40, humidity: 45, pressure: 1005, wind: 2.8, desc: 'hot', icon: '☀️' },
+            'riyadh': { name: 'Riyadh', temp: 38, feels: 42, humidity: 20, pressure: 1003, wind: 3.1, desc: 'very hot', icon: '☀️' },
+            'cairo': { name: 'Cairo', temp: 26, feels: 28, humidity: 40, pressure: 1012, wind: 2.5, desc: 'dry', icon: '☀️' },
+            'cape town': { name: 'Cape Town', temp: 18, feels: 16, humidity: 72, pressure: 1018, wind: 4.2, desc: 'windy', icon: '💨' },
+            'tel aviv': { name: 'Tel Aviv', temp: 22, feels: 24, humidity: 65, pressure: 1014, wind: 3.8, desc: 'pleasant', icon: '☀️' },
+            
+            // Australia & Oceania
+            'sydney': { name: 'Sydney', temp: 20, feels: 19, humidity: 65, pressure: 1016, wind: 3.8, desc: 'clear', icon: '☀️' },
+            'melbourne': { name: 'Melbourne', temp: 16, feels: 14, humidity: 70, pressure: 1015, wind: 4.5, desc: 'changeable', icon: '⛅' },
+            'brisbane': { name: 'Brisbane', temp: 24, feels: 27, humidity: 68, pressure: 1013, wind: 2.8, desc: 'subtropical', icon: '🌤️' },
+            'perth': { name: 'Perth', temp: 22, feels: 20, humidity: 55, pressure: 1017, wind: 3.2, desc: 'dry', icon: '☀️' },
+            'auckland': { name: 'Auckland', temp: 17, feels: 15, humidity: 78, pressure: 1014, wind: 4.1, desc: 'mild', icon: '⛅' },
+            
+            // South America
+            'sao paulo': { name: 'Sao Paulo', temp: 21, feels: 23, humidity: 75, pressure: 1012, wind: 2.5, desc: 'mild', icon: '⛅' },
+            'rio de janeiro': { name: 'Rio de Janeiro', temp: 26, feels: 30, humidity: 80, pressure: 1010, wind: 3.1, desc: 'tropical', icon: '🌴' },
+            'buenos aires': { name: 'Buenos Aires', temp: 19, feels: 17, humidity: 70, pressure: 1015, wind: 3.8, desc: 'pleasant', icon: '⛅' },
+            'lima': { name: 'Lima', temp: 20, feels: 22, humidity: 85, pressure: 1013, wind: 2.2, desc: 'humid', icon: '🌫️' }
+        };
+
+        const validCities = Object.keys(cityWeatherData);
+
+        async function getWeather() {
+            const city = document.getElementById('cityInput').value.trim().toLowerCase();
+            
+            if (!city) {
+                showError('Please enter a city name');
+                return;
+            }
+
+            showLoading(true);
+            hideElements();
+            
+            // Check if city exists in our database
+            if (cityWeatherData[city]) {
+                setTimeout(() => {
+                    displayWeather(cityWeatherData[city]);
+                    showLoading(false);
+                }, 1000);
+            } else {
+                // Check for partial matches
+                const suggestions = validCities.filter(c => c.includes(city));
+                if (suggestions.length > 0) {
+                    showError(`City "${city}" not found. Did you mean: ${suggestions.slice(0,3).join(', ')}?`);
+                } else {
+                    showError(`City "${city}" not found. Try: London, New York, Paris, Tokyo, Mumbai, Delhi, Sydney, Dubai, Singapore, Berlin, Rome, etc.`);
+                }
+                showLoading(false);
+            }
+        }
+
+        function displayWeather(data) {
+            document.getElementById('cityName').textContent = data.name;
+            document.getElementById('temperature').textContent = data.temp + '°C';
+            document.getElementById('description').textContent = data.desc;
+            document.getElementById('weatherIcon').textContent = data.icon;
+            
+            document.getElementById('feelsLike').textContent = data.feels + '°C';
+            document.getElementById('humidity').textContent = data.humidity + '%';
+            document.getElementById('windSpeed').textContent = data.wind + ' m/s';
+            document.getElementById('pressure').textContent = data.pressure + ' hPa';
+            
+            document.getElementById('weatherCard').style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('searchBtn').disabled = show;
+            document.getElementById('searchBtn').textContent = show ? 'Loading...' : 'Search';
+        }
+
+        function hideElements() {
+            document.getElementById('weatherCard').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('suggestions').style.display = 'none';
+        }
+
+        // Auto-suggestions
+        document.getElementById('cityInput').addEventListener('input', function() {
+            const input = this.value.toLowerCase();
+            const suggestionsDiv = document.getElementById('suggestions');
+            
+            if (input.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            const matches = validCities.filter(city => city.includes(input)).slice(0, 5);
+            
+            if (matches.length > 0) {
+                suggestionsDiv.innerHTML = matches.map(city => 
+                    `<div class="suggestion" onclick="selectCity('${city}')">${cityWeatherData[city].name}</div>`
+                ).join('');
+                suggestionsDiv.style.display = 'block';
+            } else {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        function selectCity(city) {
+            document.getElementById('cityInput').value = cityWeatherData[city].name;
+            document.getElementById('suggestions').style.display = 'none';
+            getWeather();
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-box')) {
+                document.getElementById('suggestions').style.display = 'none';
+            }
+        });
+
+        document.getElementById('cityInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getWeather();
+            }
+        });
+
+        window.onload = function() {
+            getWeather();
+        };
+    </script>
+</body>
+</html>

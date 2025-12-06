@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final Working Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section { margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        button { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; margin: 5px; font-size: 14px; }
+        button:hover { background: #0056b3; }
+        .success-btn { background: #28a745; }
+        .danger-btn { background: #dc3545; }
+        .result { background: white; padding: 15px; border-radius: 5px; margin-top: 15px; border-left: 4px solid #007bff; font-family: monospace; white-space: pre-wrap; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        input { padding: 10px; margin: 5px; width: 200px; border: 1px solid #ddd; border-radius: 4px; }
+        h1 { color: #333; text-align: center; }
+        h3 { color: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 MVC Web Services Test</h1>
+
+        <div class="section">
+            <h3>🔐 Authentication</h3>
+            <input type="email" id="email" placeholder="Email" value="admin@example.com">
+            <input type="password" id="password" placeholder="Password" value="password">
+            <br><br>
+            <button onclick="testLogin()">Login</button>
+            <button onclick="testLogout()">Logout</button>
+            <button onclick="testProfile()">Get Profile</button>
+            <div id="authResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h3>📦 Products</h3>
+            <button onclick="testGetProducts()">Get All Products</button>
+            <button onclick="testGetProduct()">Get Product 1</button>
+            <button class="success-btn" onclick="testCreateProduct()">Create Product</button>
+            <div id="productResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h3>📋 Test Results</h3>
+            <button class="success-btn" onclick="runAllTests()">Run All Tests</button>
+            <div id="allResults" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function makeRequest(url, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'}
+                };
+                if (data) options.body = JSON.stringify(data);
+                
+                const response = await fetch(url, options);
+                const text = await response.text();
+                
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    return {success: false, message: 'Invalid JSON response', raw: text};
+                }
+            } catch (error) {
+                return {success: false, message: 'Network error: ' + error.message};
+            }
+        }
+
+        function showResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.textContent = JSON.stringify(result, null, 2);
+            element.className = 'result ' + (result.success ? 'success' : 'error');
+        }
+
+        async function testLogin() {
+            const data = {
+                action: 'login',
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            const result = await makeRequest('simple_auth.php', 'POST', data);
+            showResult('authResult', result);
+        }
+
+        async function testLogout() {
+            const result = await makeRequest('simple_auth.php', 'POST', {action: 'logout'});
+            showResult('authResult', result);
+        }
+
+        async function testProfile() {
+            const result = await makeRequest('simple_auth.php', 'POST', {action: 'profile'});
+            showResult('authResult', result);
+        }
+
+        async function testGetProducts() {
+            const result = await makeRequest('simple_products.php', 'GET');
+            showResult('productResult', result);
+        }
+
+        async function testGetProduct() {
+            const result = await makeRequest('simple_products.php?id=1', 'GET');
+            showResult('productResult', result);
+        }
+
+        async function testCreateProduct() {
+            const data = {
+                name: 'Test Product ' + Date.now(),
+                price: 999,
+                category: 'Test'
+            };
+            const result = await makeRequest('simple_products.php', 'POST', data);
+            showResult('productResult', result);
+        }
+
+        async function runAllTests() {
+            const results = [];
+            
+            // Test 1: Get Products
+            results.push('1. Testing Get Products...');
+            const products = await makeRequest('simple_products.php', 'GET');
+            results.push('   Result: ' + (products.success ? '✅ SUCCESS' : '❌ FAILED'));
+            
+            // Test 2: Login
+            results.push('2. Testing Login...');
+            const login = await makeRequest('simple_auth.php', 'POST', {
+                action: 'login',
+                email: 'admin@example.com',
+                password: 'password'
+            });
+            results.push('   Result: ' + (login.success ? '✅ SUCCESS' : '❌ FAILED'));
+            
+            // Test 3: Profile
+            results.push('3. Testing Profile...');
+            const profile = await makeRequest('simple_auth.php', 'POST', {action: 'profile'});
+            results.push('   Result: ' + (profile.success ? '✅ SUCCESS' : '❌ FAILED'));
+            
+            // Test 4: Create Product
+            results.push('4. Testing Create Product...');
+            const create = await makeRequest('simple_products.php', 'POST', {
+                name: 'Auto Test Product',
+                price: 1234,
+                category: 'Auto'
+            });
+            results.push('   Result: ' + (create.success ? '✅ SUCCESS' : '❌ FAILED'));
+            
+            const element = document.getElementById('allResults');
+            element.style.display = 'block';
+            element.textContent = results.join('\n');
+            element.className = 'result success';
+        }
+    </script>
+</body>
+</html>

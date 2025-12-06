@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Location Finder - Demo Version</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; }
+        .container { max-width: 800px; margin: 30px auto; padding: 20px; }
+        .search-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .search-box h1 { text-align: center; color: #2d3436; margin-bottom: 20px; }
+        .search-form { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-form input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .search-form button { padding: 15px 25px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .search-form button:hover { background: #764ba2; }
+        .coordinates { background: #e8f4fd; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
+        .coordinates h3 { color: #2d3436; margin-bottom: 10px; }
+        .coord-item { margin: 5px 0; font-weight: bold; color: #636e72; }
+        .map-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .map-placeholder { width: 100%; height: 400px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #636e72; }
+        .error { background: #ff7675; color: white; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; display: none; }
+        .loading { text-align: center; padding: 20px; color: #636e72; display: none; }
+        .sample-addresses { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .sample-addresses h4 { color: #2d3436; margin-bottom: 10px; }
+        .sample-addresses p { font-size: 14px; color: #636e72; line-height: 1.4; }
+        .demo-note { background: #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; color: #2d3436; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-note">
+            <strong>Demo Version:</strong> This version works with sample locations. For full functionality, add Google Maps API key to index.html
+        </div>
+
+        <div class="search-box">
+            <h1>🗺️ Location Finder</h1>
+            <p style="text-align: center; color: #636e72; margin-bottom: 20px;">Enter any address to find its coordinates</p>
+            
+            <div class="search-form">
+                <input type="text" id="addressInput" placeholder="Enter address (e.g., Times Square, New York)" onkeypress="handleKeyPress(event)">
+                <button onclick="geocodeAddress()">Find Location</button>
+            </div>
+
+            <div class="sample-addresses">
+                <h4>Available Sample Locations:</h4>
+                <p><strong>Famous Places:</strong> Times Square, Eiffel Tower, Big Ben, Taj Mahal, Statue of Liberty, Golden Gate Bridge</p>
+                <p><strong>Cities:</strong> Mumbai India, Tokyo Japan, Sydney Australia, Dubai UAE</p>
+            </div>
+
+            <div id="loading" class="loading">Searching location...</div>
+            <div id="error" class="error"></div>
+            
+            <div id="coordinates" class="coordinates">
+                <h3>📍 Location Details</h3>
+                <div class="coord-item">Address: <span id="formattedAddress"></span></div>
+                <div class="coord-item">Latitude: <span id="latitude"></span></div>
+                <div class="coord-item">Longitude: <span id="longitude"></span></div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div class="map-placeholder">
+                <h3>🗺️ Map View</h3>
+                <p>Coordinates will be displayed here</p>
+                <div id="mapInfo" style="margin-top: 20px; text-align: center; display: none;">
+                    <strong>Location Found!</strong><br>
+                    <span id="mapCoords"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                geocodeAddress();
+            }
+        }
+
+        async function geocodeAddress() {
+            const address = document.getElementById('addressInput').value.trim();
+            
+            if (!address) {
+                showError('Please enter an address');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+            hideCoordinates();
+            hideMapInfo();
+
+            try {
+                const response = await fetch('geocode.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address: address })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch location data');
+                }
+
+                if (data.status === 'OK' && data.results[0]) {
+                    const result = data.results[0];
+                    const location = result.geometry.location;
+                    
+                    displayLocation(location.lat, location.lng, result.formatted_address);
+                    showMapInfo(location.lat, location.lng, result.formatted_address);
+                } else {
+                    throw new Error('Location not found');
+                }
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayLocation(lat, lng, address) {
+            document.getElementById('formattedAddress').textContent = address;
+            document.getElementById('latitude').textContent = lat.toFixed(6);
+            document.getElementById('longitude').textContent = lng.toFixed(6);
+            document.getElementById('coordinates').style.display = 'block';
+        }
+
+        function showMapInfo(lat, lng, address) {
+            document.getElementById('mapCoords').innerHTML = `
+                <strong>${address}</strong><br>
+                Latitude: ${lat.toFixed(6)}<br>
+                Longitude: ${lng.toFixed(6)}
+            `;
+            document.getElementById('mapInfo').style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function hideCoordinates() {
+            document.getElementById('coordinates').style.display = 'none';
+        }
+
+        function hideMapInfo() {
+            document.getElementById('mapInfo').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

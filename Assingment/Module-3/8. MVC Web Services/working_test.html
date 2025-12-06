@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Working API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+        .section { background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .response { background: white; padding: 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Working API Test</h1>
+
+    <div class="section">
+        <h3>Authentication Test</h3>
+        <input type="email" id="email" placeholder="Email" value="admin@example.com">
+        <input type="password" id="password" placeholder="Password" value="password">
+        <br>
+        <button onclick="login()">Login</button>
+        <button onclick="logout()">Logout</button>
+        <button onclick="getProfile()">Get Profile</button>
+        <div id="authResult" class="response" style="display:none;"></div>
+    </div>
+
+    <div class="section">
+        <h3>Products Test</h3>
+        <button onclick="getAllProducts()">Get All Products</button>
+        <button onclick="getProduct(1)">Get Product 1</button>
+        <button onclick="createProduct()">Create Product</button>
+        <div id="productResult" class="response" style="display:none;"></div>
+    </div>
+
+    <script>
+        async function apiCall(url, method, data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'}
+                };
+                if (data) options.body = JSON.stringify(data);
+                
+                const response = await fetch(url, options);
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                return {success: false, message: 'Network error: ' + error.message};
+            }
+        }
+
+        function showResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            element.className = 'response ' + (result.success ? 'success' : 'error');
+        }
+
+        async function login() {
+            const data = {
+                action: 'login',
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            const result = await apiCall('simple_auth.php', 'POST', data);
+            showResult('authResult', result);
+        }
+
+        async function logout() {
+            const result = await apiCall('simple_auth.php', 'POST', {action: 'logout'});
+            showResult('authResult', result);
+        }
+
+        async function getProfile() {
+            const result = await apiCall('simple_auth.php', 'POST', {action: 'profile'});
+            showResult('authResult', result);
+        }
+
+        async function getAllProducts() {
+            const result = await apiCall('simple_products.php', 'GET');
+            showResult('productResult', result);
+        }
+
+        async function getProduct(id) {
+            const result = await apiCall(`simple_products.php?id=${id}`, 'GET');
+            showResult('productResult', result);
+        }
+
+        async function createProduct() {
+            const data = {
+                name: 'Test Product',
+                price: 1000,
+                category: 'Test'
+            };
+            const result = await apiCall('simple_products.php', 'POST', data);
+            showResult('productResult', result);
+        }
+    </script>
+</body>
+</html>

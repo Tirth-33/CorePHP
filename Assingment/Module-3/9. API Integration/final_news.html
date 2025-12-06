@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>News App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 20px 0; text-align: center; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        .controls { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        .controls select, .controls button { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .controls button { background: #3498db; color: white; border: none; cursor: pointer; }
+        .controls button:hover { background: #2980b9; }
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .news-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .news-image { width: 100%; height: 200px; object-fit: cover; background: #e0e0e0; }
+        .news-content { padding: 20px; }
+        .news-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #2c3e50; }
+        .news-description { color: #555; margin-bottom: 15px; line-height: 1.4; }
+        .news-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #777; }
+        .news-source { font-weight: bold; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .image-placeholder { width: 100%; height: 200px; background: linear-gradient(45deg, #3498db, #2980b9); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>News App</h1>
+        <p>Latest news from around the world</p>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <select id="category">
+                <option value="general">General</option>
+                <option value="business">Business</option>
+                <option value="technology">Technology</option>
+                <option value="sports">Sports</option>
+                <option value="health">Health</option>
+            </select>
+            <button onclick="loadNews()">Load News</button>
+        </div>
+
+        <div id="loading" class="loading" style="display:none;">
+            Loading news articles...
+        </div>
+
+        <div id="newsContainer" class="news-grid"></div>
+    </div>
+
+    <script>
+        const newsData = {
+            general: [
+                {
+                    title: "Breaking: Major Scientific Discovery Announced",
+                    description: "Scientists have made a groundbreaking discovery that could change our understanding of the universe.",
+                    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop",
+                    source: "Science Daily",
+                    publishedAt: "2024-01-15T10:30:00Z"
+                },
+                {
+                    title: "Global Summit Reaches Historic Agreement",
+                    description: "World leaders have reached a consensus on important global issues affecting millions of people.",
+                    image: "https://images.unsplash.com/photo-1541872705-1f73c6400ec9?w=300&h=200&fit=crop",
+                    source: "World News",
+                    publishedAt: "2024-01-15T08:15:00Z"
+                }
+            ],
+            technology: [
+                {
+                    title: "AI Revolution: New Breakthrough in Machine Learning",
+                    description: "Researchers have developed a new AI system that can learn and adapt faster than ever before.",
+                    image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=300&h=200&fit=crop",
+                    source: "Tech Today",
+                    publishedAt: "2024-01-15T12:00:00Z"
+                },
+                {
+                    title: "Quantum Computing Reaches New Milestone",
+                    description: "Scientists achieve quantum supremacy with new computing breakthrough that could revolutionize technology.",
+                    image: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=200&fit=crop",
+                    source: "Quantum News",
+                    publishedAt: "2024-01-15T09:45:00Z"
+                }
+            ],
+            business: [
+                {
+                    title: "Stock Market Hits Record High",
+                    description: "Major indices reach all-time highs as investors show confidence in economic recovery.",
+                    image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=300&h=200&fit=crop",
+                    source: "Financial Times",
+                    publishedAt: "2024-01-15T11:20:00Z"
+                },
+                {
+                    title: "Tech Giants Report Strong Quarterly Earnings",
+                    description: "Major technology companies exceed expectations with robust financial performance this quarter.",
+                    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=300&h=200&fit=crop",
+                    source: "Business Weekly",
+                    publishedAt: "2024-01-15T07:30:00Z"
+                }
+            ],
+            sports: [
+                {
+                    title: "Championship Finals Set for This Weekend",
+                    description: "Two powerhouse teams prepare for the most anticipated match of the season.",
+                    image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=300&h=200&fit=crop",
+                    source: "Sports Central",
+                    publishedAt: "2024-01-15T14:15:00Z"
+                },
+                {
+                    title: "Olympic Records Broken at International Games",
+                    description: "Athletes set new world records in multiple events at the international competition.",
+                    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop",
+                    source: "Olympic News",
+                    publishedAt: "2024-01-15T13:00:00Z"
+                }
+            ],
+            health: [
+                {
+                    title: "Medical Breakthrough in Cancer Treatment",
+                    description: "New treatment shows promising results in clinical trials, offering hope to patients worldwide.",
+                    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=200&fit=crop",
+                    source: "Medical Journal",
+                    publishedAt: "2024-01-15T16:45:00Z"
+                },
+                {
+                    title: "Global Health Initiative Launches Worldwide",
+                    description: "International health organizations unite to address global health challenges and improve access to care.",
+                    image: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=200&fit=crop",
+                    source: "Health Today",
+                    publishedAt: "2024-01-15T15:20:00Z"
+                }
+            ]
+        };
+
+        function loadNews() {
+            const category = document.getElementById('category').value;
+            showLoading(true);
+            
+            setTimeout(() => {
+                const articles = newsData[category] || newsData.general;
+                displayNews(articles);
+                showLoading(false);
+            }, 800);
+        }
+
+        function displayNews(articles) {
+            const container = document.getElementById('newsContainer');
+            let html = '';
+            
+            articles.forEach(article => {
+                html += `
+                    <div class="news-card">
+                        <img src="${article.image}" alt="${article.title}" class="news-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="image-placeholder" style="display:none;">${getCategoryIcon(article.source)}</div>
+                        <div class="news-content">
+                            <h3 class="news-title">${article.title}</h3>
+                            <p class="news-description">${article.description}</p>
+                            <div class="news-meta">
+                                <span class="news-source">${article.source}</span>
+                                <span>${formatDate(article.publishedAt)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function getCategoryIcon(source) {
+            if (source.includes('Tech') || source.includes('Quantum')) return '💻 Tech News';
+            if (source.includes('Medical') || source.includes('Health')) return '🏥 Health News';
+            if (source.includes('Business') || source.includes('Financial')) return '💼 Business';
+            if (source.includes('Sports') || source.includes('Olympic')) return '⚽ Sports';
+            return '📰 News';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        window.onload = function() {
+            loadNews();
+        };
+    </script>
+</body>
+</html>

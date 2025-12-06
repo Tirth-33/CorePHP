@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Social Authentication Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        .login-container h1 { text-align: center; color: #333; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        .demo-note { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin-bottom: 25px; color: #856404; font-size: 13px; }
+        .social-buttons { display: flex; flex-direction: column; gap: 15px; }
+        .social-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 15px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; text-decoration: none; transition: all 0.3s; user-select: none; }
+        .google-btn { background: #4285f4; color: white; }
+        .google-btn:hover { background: #357ae8; transform: translateY(-1px); }
+        .google-btn:active { transform: translateY(0); }
+        .facebook-btn { background: #1877f2; color: white; }
+        .facebook-btn:hover { background: #166fe5; transform: translateY(-1px); }
+        .facebook-btn:active { transform: translateY(0); }
+        .divider { text-align: center; margin: 25px 0; color: #666; position: relative; }
+        .divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #ddd; }
+        .divider span { background: white; padding: 0 15px; }
+        .traditional-login { text-align: center; }
+        .traditional-login input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; }
+        .traditional-login button { width: 100%; padding: 12px; background: #333; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        .user-profile { display: none; text-align: center; padding: 20px; }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 15px; }
+        .profile-info h3 { color: #333; margin-bottom: 5px; }
+        .profile-info p { color: #666; margin-bottom: 15px; }
+        .logout-btn { background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div id="loginForm">
+            <h1>🔐 Social Login</h1>
+            <p class="subtitle">Sign in with your social accounts</p>
+            
+            <div class="demo-note">
+                <strong>Demo Mode:</strong> This simulates social authentication. For real integration, configure Google/Facebook OAuth credentials.
+            </div>
+
+            <div class="social-buttons">
+                <button class="social-btn google-btn" onclick="loginWithGoogle()">
+                    <span>🔍</span>
+                    <span>Continue with Google</span>
+                </button>
+                
+                <button class="social-btn facebook-btn" onclick="loginWithFacebook()">
+                    <span>📘</span>
+                    <span>Continue with Facebook</span>
+                </button>
+            </div>
+
+            <div class="divider">
+                <span>or</span>
+            </div>
+
+            <div class="traditional-login">
+                <input type="email" id="email" placeholder="Email address">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="loginTraditional()">Sign In</button>
+            </div>
+        </div>
+
+        <div id="userProfile" class="user-profile">
+            <img id="profileAvatar" class="profile-avatar" src="" alt="Profile">
+            <div class="profile-info">
+                <h3 id="profileName"></h3>
+                <p id="profileEmail"></p>
+                <p id="profileProvider"></p>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Google OAuth SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Facebook SDK -->
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+
+    <script>
+        // Mock user data for demo
+        const mockUsers = {
+            google: {
+                name: 'John Doe',
+                email: 'john.doe@gmail.com',
+                avatar: 'https://via.placeholder.com/80/4285f4/white?text=JD',
+                provider: 'Google'
+            },
+            facebook: {
+                name: 'Jane Smith',
+                email: 'jane.smith@facebook.com',
+                avatar: 'https://via.placeholder.com/80/1877f2/white?text=JS',
+                provider: 'Facebook'
+            }
+        };
+
+        // Initialize Google OAuth (requires client ID)
+        function initializeGoogle() {
+            if (typeof google !== 'undefined') {
+                google.accounts.id.initialize({
+                    client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with actual client ID
+                    callback: handleGoogleResponse
+                });
+            }
+        }
+
+        // Initialize Facebook SDK (requires app ID)
+        function initializeFacebook() {
+            if (typeof FB !== 'undefined') {
+                FB.init({
+                    appId: 'YOUR_FACEBOOK_APP_ID', // Replace with actual app ID
+                    cookie: true,
+                    xfbml: true,
+                    version: 'v18.0'
+                });
+            }
+        }
+
+        // Google login handler
+        function loginWithGoogle() {
+            alert('Google login clicked!');
+            simulateLogin('google');
+        }
+
+        // Facebook login handler
+        function loginWithFacebook() {
+            alert('Facebook login clicked!');
+            simulateLogin('facebook');
+        }
+
+        // Handle Google OAuth response
+        function handleGoogleResponse(response) {
+            // Decode JWT token to get user info
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            
+            showUserProfile({
+                name: payload.name,
+                email: payload.email,
+                avatar: payload.picture,
+                provider: 'Google'
+            });
+        }
+
+        // Traditional login
+        function loginTraditional() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            
+            // Simulate traditional login
+            showUserProfile({
+                name: 'Demo User',
+                email: email,
+                avatar: 'https://via.placeholder.com/80/333/white?text=DU',
+                provider: 'Traditional Login'
+            });
+        }
+
+        // Simulate social login for demo
+        function simulateLogin(provider) {
+            const user = mockUsers[provider];
+            showUserProfile(user);
+        }
+
+        // Display user profile after successful login
+        function showUserProfile(user) {
+            document.getElementById('profileName').textContent = user.name;
+            document.getElementById('profileEmail').textContent = user.email;
+            document.getElementById('profileProvider').textContent = `Logged in via ${user.provider}`;
+            document.getElementById('profileAvatar').src = user.avatar;
+            
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('userProfile').style.display = 'block';
+            
+            // Store user session
+            localStorage.setItem('user', JSON.stringify(user));
+        }
+
+        // Logout function
+        function logout() {
+            // Clear session
+            localStorage.removeItem('user');
+            
+            // Logout from social providers
+            if (typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.disableAutoSelect();
+            }
+            
+            if (typeof FB !== 'undefined') {
+                FB.logout();
+            }
+            
+            // Show login form
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('userProfile').style.display = 'none';
+            
+            // Clear form
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Check for existing session on page load
+        window.onload = function() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                showUserProfile(JSON.parse(savedUser));
+            }
+            
+            // Initialize social SDKs
+            setTimeout(() => {
+                initializeGoogle();
+                initializeFacebook();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

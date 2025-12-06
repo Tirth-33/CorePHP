@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Twitter Hashtag Search</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #1da1f2, #0d8bd9); min-height: 100vh; }
+        .container { max-width: 800px; margin: 30px auto; padding: 20px; }
+        .search-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 30px; }
+        .search-box h1 { text-align: center; color: #1da1f2; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #657786; margin-bottom: 25px; }
+        .search-form { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-form input { flex: 1; padding: 15px; border: 2px solid #e1e8ed; border-radius: 25px; font-size: 16px; }
+        .search-form button { padding: 15px 25px; background: #1da1f2; color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; }
+        .search-form button:hover { background: #0d8bd9; }
+        .sample-hashtags { background: #f7f9fa; padding: 15px; border-radius: 8px; }
+        .sample-hashtags h4 { color: #14171a; margin-bottom: 10px; }
+        .sample-hashtags p { font-size: 14px; color: #657786; }
+        .demo-note { background: #ffad1f; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .tweets-container { display: none; }
+        .tweet-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .tweet-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: #1da1f2; }
+        .user-info h4 { color: #14171a; font-size: 15px; }
+        .username { color: #657786; font-size: 14px; }
+        .tweet-text { color: #14171a; line-height: 1.4; margin-bottom: 12px; font-size: 15px; }
+        .hashtag { color: #1da1f2; font-weight: bold; }
+        .tweet-stats { display: flex; gap: 20px; color: #657786; font-size: 13px; }
+        .stat { display: flex; align-items: center; gap: 5px; }
+        .loading { text-align: center; padding: 40px; color: white; }
+        .error { background: #e0245e; color: white; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-box">
+            <h1>🐦 Twitter Hashtag Search</h1>
+            <p class="subtitle">Search for tweets by hashtag and explore trending topics</p>
+            
+            <div class="demo-note">
+                <strong>Demo Version:</strong> This version uses sample tweets. For real Twitter API integration, authentication is required.
+            </div>
+            
+            <div class="search-form">
+                <input type="text" id="hashtagInput" placeholder="Enter hashtag (e.g., javascript, react, nodejs)" onkeypress="handleKeyPress(event)">
+                <button onclick="searchTweets()">Search Tweets</button>
+            </div>
+
+            <div class="sample-hashtags">
+                <h4>Popular Hashtags to Try:</h4>
+                <p><strong>Tech:</strong> javascript, react, nodejs, python, webdev, coding, programming</p>
+                <p><strong>General:</strong> motivation, inspiration, technology, innovation, startup</p>
+            </div>
+
+            <div id="loading" class="loading" style="display:none;">Searching tweets...</div>
+            <div id="error" class="error"></div>
+        </div>
+
+        <div id="tweetsContainer" class="tweets-container">
+            <div id="tweetsGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mock tweet data for demonstration
+        const mockTweets = {
+            javascript: [
+                {
+                    user: { name: 'John Developer', username: 'johndev', avatar: '👨‍💻' },
+                    text: 'Just discovered a new #JavaScript feature that makes async programming so much easier! The power of modern JS never ceases to amaze me. 🚀',
+                    likes: 245, retweets: 89, replies: 23, time: '2h'
+                },
+                {
+                    user: { name: 'Sarah Code', username: 'sarahcodes', avatar: '👩‍💻' },
+                    text: 'Working on a new project with vanilla #JavaScript. Sometimes going back to basics helps you appreciate the fundamentals! 💡',
+                    likes: 156, retweets: 34, replies: 12, time: '4h'
+                },
+                {
+                    user: { name: 'Tech Guru', username: 'techguru', avatar: '🧑‍🔬' },
+                    text: 'Hot take: #JavaScript is becoming the universal language of programming. From web to mobile to desktop - it\'s everywhere! 🌐',
+                    likes: 892, retweets: 234, replies: 67, time: '6h'
+                }
+            ],
+            react: [
+                {
+                    user: { name: 'React Master', username: 'reactmaster', avatar: '⚛️' },
+                    text: 'New #React hooks are game changers! Just refactored my entire component library and the code is so much cleaner now. 🎯',
+                    likes: 567, retweets: 123, replies: 45, time: '1h'
+                },
+                {
+                    user: { name: 'Frontend Dev', username: 'frontenddev', avatar: '🎨' },
+                    text: 'Building my first #React Native app and loving the developer experience. Write once, run everywhere! 📱',
+                    likes: 234, retweets: 67, replies: 19, time: '3h'
+                }
+            ],
+            nodejs: [
+                {
+                    user: { name: 'Backend Pro', username: 'backendpro', avatar: '🔧' },
+                    text: 'Just deployed a #NodeJS microservice that handles 10k requests per second. The performance is incredible! ⚡',
+                    likes: 445, retweets: 98, replies: 34, time: '2h'
+                },
+                {
+                    user: { name: 'Server Side', username: 'serverside', avatar: '🖥️' },
+                    text: 'Love how #NodeJS makes it easy to build scalable APIs. The ecosystem is just amazing! 🚀',
+                    likes: 178, retweets: 45, replies: 16, time: '5h'
+                }
+            ],
+            python: [
+                {
+                    user: { name: 'Python Dev', username: 'pythondev', avatar: '🐍' },
+                    text: 'Just finished a machine learning project with #Python. The libraries available make complex tasks so simple! 🤖',
+                    likes: 678, retweets: 156, replies: 78, time: '1h'
+                },
+                {
+                    user: { name: 'Data Scientist', username: 'datascientist', avatar: '📊' },
+                    text: 'Working with pandas and numpy in #Python for data analysis. The power of these tools is incredible! 📈',
+                    likes: 345, retweets: 89, replies: 23, time: '4h'
+                }
+            ],
+            webdev: [
+                {
+                    user: { name: 'Web Designer', username: 'webdesigner', avatar: '🎨' },
+                    text: 'Modern #webdev is so exciting! CSS Grid, Flexbox, and new JavaScript features make creating beautiful UIs a joy. ✨',
+                    likes: 234, retweets: 67, replies: 21, time: '2h'
+                }
+            ]
+        };
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchTweets();
+            }
+        }
+
+        function searchTweets() {
+            const hashtag = document.getElementById('hashtagInput').value.trim().replace('#', '').toLowerCase();
+            
+            if (!hashtag) {
+                showError('Please enter a hashtag');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+            hideTweets();
+
+            // Simulate API delay
+            setTimeout(() => {
+                const tweets = mockTweets[hashtag] || [];
+                
+                if (tweets.length > 0) {
+                    displayTweets(tweets, hashtag);
+                } else {
+                    showError(`No tweets found for #${hashtag}. Try: javascript, react, nodejs, python, webdev`);
+                }
+                
+                showLoading(false);
+            }, 1000);
+        }
+
+        function displayTweets(tweets, hashtag) {
+            const tweetsGrid = document.getElementById('tweetsGrid');
+            let html = `<h3 style="color: white; margin-bottom: 20px; text-align: center;">📱 Tweets for #${hashtag}</h3>`;
+            
+            tweets.forEach(tweet => {
+                html += `
+                    <div class="tweet-card">
+                        <div class="tweet-header">
+                            <div class="avatar">${tweet.user.avatar}</div>
+                            <div class="user-info">
+                                <h4>${tweet.user.name}</h4>
+                                <div class="username">@${tweet.user.username} · ${tweet.time}</div>
+                            </div>
+                        </div>
+                        <div class="tweet-text">${formatHashtags(tweet.text)}</div>
+                        <div class="tweet-stats">
+                            <div class="stat">
+                                <span>💬</span>
+                                <span>${tweet.replies}</span>
+                            </div>
+                            <div class="stat">
+                                <span>🔄</span>
+                                <span>${tweet.retweets}</span>
+                            </div>
+                            <div class="stat">
+                                <span>❤️</span>
+                                <span>${tweet.likes}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            tweetsGrid.innerHTML = html;
+            document.getElementById('tweetsContainer').style.display = 'block';
+        }
+
+        function formatHashtags(text) {
+            return text.replace(/#(\w+)/g, '<span class="hashtag">#$1</span>');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function hideTweets() {
+            document.getElementById('tweetsContainer').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

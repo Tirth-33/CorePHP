@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Location Finder - Google Maps Geocoding</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; }
+        .container { max-width: 800px; margin: 30px auto; padding: 20px; }
+        .search-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .search-box h1 { text-align: center; color: #2d3436; margin-bottom: 20px; }
+        .search-form { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-form input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .search-form button { padding: 15px 25px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .search-form button:hover { background: #764ba2; }
+        .coordinates { background: #e8f4fd; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
+        .coordinates h3 { color: #2d3436; margin-bottom: 10px; }
+        .coord-item { margin: 5px 0; font-weight: bold; color: #636e72; }
+        .map-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        #map { width: 100%; height: 400px; }
+        .error { background: #ff7675; color: white; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; display: none; }
+        .loading { text-align: center; padding: 20px; color: #636e72; display: none; }
+        .sample-addresses { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .sample-addresses h4 { color: #2d3436; margin-bottom: 10px; }
+        .sample-addresses p { font-size: 14px; color: #636e72; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-box">
+            <h1>🗺️ Location Finder</h1>
+            <p style="text-align: center; color: #636e72; margin-bottom: 20px;">Enter any address to find its coordinates and view on map</p>
+            
+            <div class="search-form">
+                <input type="text" id="addressInput" placeholder="Enter address (e.g., Times Square, New York)" onkeypress="handleKeyPress(event)">
+                <button onclick="geocodeAddress()">Find Location</button>
+            </div>
+
+            <div class="sample-addresses">
+                <h4>Sample Addresses to Try:</h4>
+                <p><strong>Famous Places:</strong> Times Square New York, Eiffel Tower Paris, Big Ben London, Taj Mahal Agra India</p>
+                <p><strong>Cities:</strong> Mumbai India, Tokyo Japan, Sydney Australia, Dubai UAE</p>
+            </div>
+
+            <div id="loading" class="loading">Searching location...</div>
+            <div id="error" class="error"></div>
+            
+            <div id="coordinates" class="coordinates">
+                <h3>📍 Location Details</h3>
+                <div class="coord-item">Address: <span id="formattedAddress"></span></div>
+                <div class="coord-item">Latitude: <span id="latitude"></span></div>
+                <div class="coord-item">Longitude: <span id="longitude"></span></div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let marker;
+        let geocoder;
+        let mapLoaded = false;
+
+        function initMap() {
+            try {
+                // Initialize map centered on world view
+                map = new google.maps.Map(document.getElementById('map'), {
+                    zoom: 2,
+                    center: { lat: 20, lng: 0 },
+                    mapTypeId: 'roadmap'
+                });
+                
+                geocoder = new google.maps.Geocoder();
+                mapLoaded = true;
+            } catch (error) {
+                console.log('Google Maps failed to load, using fallback');
+                showMapFallback();
+            }
+        }
+
+        function showMapFallback() {
+            document.getElementById('map').innerHTML = `
+                <div style="padding: 50px; text-align: center; color: #636e72;">
+                    <h3>🗺️ Map View</h3>
+                    <p>Coordinates will be displayed here</p>
+                    <div id="mapInfo" style="margin-top: 20px; display: none;">
+                        <strong>Location Found!</strong><br>
+                        <span id="mapCoords"></span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                geocodeAddress();
+            }
+        }
+
+        async function geocodeAddress() {
+            const address = document.getElementById('addressInput').value.trim();
+            
+            if (!address) {
+                showError('Please enter an address');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+            hideCoordinates();
+
+            // Try Google Maps API first, fallback to mock data
+            if (mapLoaded && geocoder) {
+                geocoder.geocode({ address: address }, (results, status) => {
+                    showLoading(false);
+                    
+                    if (status === 'OK' && results[0]) {
+                        const location = results[0].geometry.location;
+                        const formattedAddress = results[0].formatted_address;
+                        
+                        displayLocation(location.lat(), location.lng(), formattedAddress);
+                        showOnMap(location, formattedAddress);
+                    } else {
+                        showError('Location not found. Please try a different address.');
+                    }
+                });
+            } else {
+                // Fallback to mock geocoding
+                try {
+                    const response = await fetch('geocode.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ address: address })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to fetch location data');
+                    }
+
+                    if (data.status === 'OK' && data.results[0]) {
+                        const result = data.results[0];
+                        const location = result.geometry.location;
+                        
+                        displayLocation(location.lat, location.lng, result.formatted_address);
+                        showMapFallback2(location.lat, location.lng, result.formatted_address);
+                    } else {
+                        throw new Error('Location not found');
+                    }
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+
+        function displayLocation(lat, lng, address) {
+            document.getElementById('formattedAddress').textContent = address;
+            document.getElementById('latitude').textContent = lat.toFixed(6);
+            document.getElementById('longitude').textContent = lng.toFixed(6);
+            document.getElementById('coordinates').style.display = 'block';
+        }
+
+        function showOnMap(location, address) {
+            // Center map on location
+            map.setCenter(location);
+            map.setZoom(15);
+            
+            // Remove existing marker
+            if (marker) {
+                marker.setMap(null);
+            }
+            
+            // Add new marker
+            marker = new google.maps.Marker({
+                position: location,
+                map: map,
+                title: address,
+                animation: google.maps.Animation.DROP
+            });
+            
+            // Add info window
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<div style="padding: 10px;"><strong>${address}</strong><br>Lat: ${location.lat().toFixed(6)}<br>Lng: ${location.lng().toFixed(6)}</div>`
+            });
+            
+            marker.addListener('click', () => {
+                infoWindow.open(map, marker);
+            });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function hideCoordinates() {
+            document.getElementById('coordinates').style.display = 'none';
+        }
+
+        function showMapFallback2(lat, lng, address) {
+            const mapInfo = document.getElementById('mapInfo');
+            const mapCoords = document.getElementById('mapCoords');
+            
+            if (mapInfo && mapCoords) {
+                mapCoords.innerHTML = `
+                    <strong>${address}</strong><br>
+                    Latitude: ${lat.toFixed(6)}<br>
+                    Longitude: ${lng.toFixed(6)}
+                `;
+                mapInfo.style.display = 'block';
+            }
+        }
+
+        // Initialize fallback if Google Maps doesn't load
+        window.setTimeout(function() {
+            if (!mapLoaded) {
+                showMapFallback();
+            }
+        }, 3000);
+    </script>
+    
+    <!-- Google Maps JavaScript API -->
+    <script>
+        // Fallback if Google Maps fails to load
+        window.setTimeout(function() {
+            if (typeof google === 'undefined') {
+                document.getElementById('map').innerHTML = '<div style="padding: 50px; text-align: center; color: #636e72;"><h3>🗺️ Map Unavailable</h3><p>Google Maps API key required.<br><strong>Use demo.html for immediate testing</strong></p></div>';
+            }
+        }, 3000);
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+</body>
+</html>

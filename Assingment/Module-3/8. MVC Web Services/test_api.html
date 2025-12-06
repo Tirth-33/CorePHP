@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MVC Web Services Tester</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: #333; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        .response { background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-top: 15px; }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MVC Web Services API Tester</h1>
+            <p>Test Authentication and Product Management APIs</p>
+        </div>
+
+        <div class="grid">
+            <!-- Authentication Section -->
+            <div class="section">
+                <h3>User Authentication</h3>
+                
+                <h4>Register</h4>
+                <div class="form-group">
+                    <input type="text" id="regUsername" placeholder="Username">
+                </div>
+                <div class="form-group">
+                    <input type="email" id="regEmail" placeholder="Email">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="regPassword" placeholder="Password">
+                </div>
+                <button class="btn" onclick="register()">Register</button>
+                
+                <hr style="margin: 20px 0;">
+                
+                <h4>Login</h4>
+                <div class="form-group">
+                    <input type="email" id="loginEmail" placeholder="Email" value="admin@example.com">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="loginPassword" placeholder="Password" value="password">
+                </div>
+                <button class="btn" onclick="login()">Login</button>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+                <button class="btn" onclick="getProfile()">Get Profile</button>
+                
+                <div id="authResponse" class="response" style="display:none;"></div>
+            </div>
+
+            <!-- Product Management Section -->
+            <div class="section">
+                <h3>Product Management</h3>
+                
+                <button class="btn" onclick="getAllProducts()">Get All Products</button>
+                <button class="btn" onclick="getProduct()">Get Product by ID</button>
+                
+                <hr style="margin: 20px 0;">
+                
+                <h4>Create/Update Product</h4>
+                <div class="form-group">
+                    <input type="number" id="productId" placeholder="Product ID (for update)">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="productName" placeholder="Product Name">
+                </div>
+                <div class="form-group">
+                    <textarea id="productDesc" placeholder="Description"></textarea>
+                </div>
+                <div class="form-group">
+                    <input type="number" id="productPrice" placeholder="Price" step="0.01">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="productCategory" placeholder="Category">
+                </div>
+                <button class="btn btn-success" onclick="createProduct()">Create Product</button>
+                <button class="btn" onclick="updateProduct()">Update Product</button>
+                <button class="btn btn-danger" onclick="deleteProduct()">Delete Product</button>
+                
+                <div id="productResponse" class="response" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function apiCall(url, method, data = null) {
+            const options = {
+                method: method,
+                headers: {'Content-Type': 'application/json'}
+            };
+            if (data) options.body = JSON.stringify(data);
+            
+            const response = await fetch(url, options);
+            return await response.json();
+        }
+
+        function showResponse(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            element.className = 'response ' + (result.success ? 'success' : 'error');
+        }
+
+        // Authentication functions
+        async function register() {
+            const data = {
+                action: 'register',
+                username: document.getElementById('regUsername').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value
+            };
+            
+            const result = await apiCall('api/auth.php', 'POST', data);
+            showResponse('authResponse', result);
+        }
+
+        async function login() {
+            const data = {
+                action: 'login',
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+            
+            const result = await apiCall('api/auth.php', 'POST', data);
+            showResponse('authResponse', result);
+        }
+
+        async function logout() {
+            const result = await apiCall('api/auth.php', 'POST', {action: 'logout'});
+            showResponse('authResponse', result);
+        }
+
+        async function getProfile() {
+            const result = await apiCall('api/auth.php', 'POST', {action: 'profile'});
+            showResponse('authResponse', result);
+        }
+
+        // Product functions
+        async function getAllProducts() {
+            const result = await apiCall('api/products.php', 'GET');
+            showResponse('productResponse', result);
+        }
+
+        async function getProduct() {
+            const id = prompt('Enter Product ID:');
+            if (id) {
+                const result = await apiCall(`api/products.php?id=${id}`, 'GET');
+                showResponse('productResponse', result);
+            }
+        }
+
+        async function createProduct() {
+            const data = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDesc').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value
+            };
+            
+            const result = await apiCall('api/products.php', 'POST', data);
+            showResponse('productResponse', result);
+        }
+
+        async function updateProduct() {
+            const data = {
+                id: parseInt(document.getElementById('productId').value),
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDesc').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value
+            };
+            
+            const result = await apiCall('api/products.php', 'PUT', data);
+            showResponse('productResponse', result);
+        }
+
+        async function deleteProduct() {
+            const id = document.getElementById('productId').value || prompt('Enter Product ID to delete:');
+            if (id) {
+                const result = await apiCall('api/products.php', 'DELETE', {id: parseInt(id)});
+                showResponse('productResponse', result);
+            }
+        }
+    </script>
+</body>
+</html>
