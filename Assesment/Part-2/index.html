@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Time Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .timer { font-size: 2em; margin: 20px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        #taskInput { padding: 8px; width: 300px; }
+        .log-entry { padding: 10px; border-bottom: 1px solid #ddd; }
+        .total-hours { background: #f0f0f0; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Project Time Tracker</h1>
+    
+    <div>
+        <input type="text" id="taskInput" placeholder="Enter task name">
+        <div class="timer" id="timer">00:00:00</div>
+        <button id="startBtn">Start</button>
+        <button id="stopBtn" disabled>Stop</button>
+    </div>
+
+    <div class="total-hours">
+        <h3>Total Hours by Task</h3>
+        <div id="totalHours">Loading...</div>
+    </div>
+
+    <div>
+        <h3>Task Logs</h3>
+        <div id="logs"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
