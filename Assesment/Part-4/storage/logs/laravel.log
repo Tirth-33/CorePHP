@@ -1,0 +1,47 @@
+[2025-12-20 02:43:32] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [] is not defined. at E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Log\\LogManager.php:212)
+[stacktrace]
+#0 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Log\\LogManager.php(137): Illuminate\\Log\\LogManager->resolve(NULL, NULL)
+#1 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Log\\LogManager.php(124): Illuminate\\Log\\LogManager->get(NULL)
+#2 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Log\\LogManager.php(681): Illuminate\\Log\\LogManager->driver()
+#3 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(317): Illuminate\\Log\\LogManager->error('RecursiveDirect...', Array)
+#4 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(278): Illuminate\\Foundation\\Exceptions\\Handler->reportThrowable(Object(ValueError))
+#5 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(523): Illuminate\\Foundation\\Exceptions\\Handler->report(Object(ValueError))
+#6 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(203): Illuminate\\Foundation\\Console\\Kernel->reportException(Object(ValueError))
+#7 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\artisan(12): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 {main}
+"} 
+[2025-12-20 02:43:32] laravel.ERROR: RecursiveDirectoryIterator::__construct(): Argument #1 ($directory) cannot be empty {"exception":"[object] (ValueError(code: 0): RecursiveDirectoryIterator::__construct(): Argument #1 ($directory) cannot be empty at E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\symfony\\finder\\Iterator\\RecursiveDirectoryIterator.php:43)
+[stacktrace]
+#0 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\symfony\\finder\\Iterator\\RecursiveDirectoryIterator.php(43): RecursiveDirectoryIterator->__construct('', 4096)
+#1 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\symfony\\finder\\Finder.php(793): Symfony\\Component\\Finder\\Iterator\\RecursiveDirectoryIterator->__construct('', 4096, false)
+#2 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\symfony\\finder\\Finder.php(674): Symfony\\Component\\Finder\\Finder->searchInDirectory('')
+#3 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\LoadConfiguration.php(86): Symfony\\Component\\Finder\\Finder->getIterator()
+#4 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\LoadConfiguration.php(63): Illuminate\\Foundation\\Bootstrap\\LoadConfiguration->getConfigurationFiles(Object(Illuminate\\Foundation\\Application))
+#5 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\LoadConfiguration.php(39): Illuminate\\Foundation\\Bootstrap\\LoadConfiguration->loadConfigurationFiles(Object(Illuminate\\Foundation\\Application), Object(Illuminate\\Config\\Repository))
+#6 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(286): Illuminate\\Foundation\\Bootstrap\\LoadConfiguration->bootstrap(Object(Illuminate\\Foundation\\Application))
+#7 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(447): Illuminate\\Foundation\\Application->bootstrapWith(Array)
+#8 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(199): Illuminate\\Foundation\\Console\\Kernel->bootstrap()
+#9 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\artisan(12): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 {main}
+"} 
+[2025-12-20 02:43:44] laravel.EMERGENCY: Unable to create configured logger. Using emergency logger. {"exception":"[object] (InvalidArgumentException(code: 0): Log [] is not defined. at E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Log\\LogManager.php:212)
+[stacktrace]
+#0 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Log\\LogManager.php(137): Illuminate\\Log\\LogManager->resolve(NULL, NULL)
+#1 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Log\\LogManager.php(124): Illuminate\\Log\\LogManager->get(NULL)
+#2 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Log\\LogManager.php(681): Illuminate\\Log\\LogManager->driver()
+#3 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(317): Illuminate\\Log\\LogManager->error('Unable to load ...', Array)
+#4 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Exceptions\\Handler.php(278): Illuminate\\Foundation\\Exceptions\\Handler->reportThrowable(Object(Exception))
+#5 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(523): Illuminate\\Foundation\\Exceptions\\Handler->report(Object(Exception))
+#6 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(203): Illuminate\\Foundation\\Console\\Kernel->reportException(Object(Exception))
+#7 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\artisan(12): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 {main}
+"} 
+[2025-12-20 02:43:44] laravel.ERROR: Unable to load the "app" configuration file. {"exception":"[object] (Exception(code: 0): Unable to load the \"app\" configuration file. at E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\LoadConfiguration.php:66)
+[stacktrace]
+#0 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Bootstrap\\LoadConfiguration.php(39): Illuminate\\Foundation\\Bootstrap\\LoadConfiguration->loadConfigurationFiles(Object(Illuminate\\Foundation\\Application), Object(Illuminate\\Config\\Repository))
+#1 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Application.php(286): Illuminate\\Foundation\\Bootstrap\\LoadConfiguration->bootstrap(Object(Illuminate\\Foundation\\Application))
+#2 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(447): Illuminate\\Foundation\\Application->bootstrapWith(Array)
+#3 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\vendor\\laravel\\framework\\src\\Illuminate\\Foundation\\Console\\Kernel.php(199): Illuminate\\Foundation\\Console\\Kernel->bootstrap()
+#4 E:\\xampp\\htdocs\\Revision\\Assesment\\Part-4\\artisan(12): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#5 {main}
+"} 

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Grades API Test</title>
+</head>
+<body>
+    <h1>Student Grades API Test</h1>
+    
+    <h2>1. Login Test</h2>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="loginResult"></div>
+    
+    <h2>2. Get Grades Test</h2>
+    <button onclick="testGrades()">Test Get Grades</button>
+    <div id="gradesResult"></div>
+    
+    <h2>3. Get Subjects Test</h2>
+    <button onclick="testSubjects()">Test Get Subjects</button>
+    <div id="subjectsResult"></div>
+
+    <script>
+        let token = '';
+        
+        function testLogin() {
+            fetch('test.php?path=login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'email=john@test.com&password=password'
+            })
+            .then(response => response.json())
+            .then(data => {
+                token = data.token;
+                document.getElementById('loginResult').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            });
+        }
+        
+        function testGrades() {
+            fetch('test.php?path=grades&token=test-token-123')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('gradesResult').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            });
+        }
+        
+        function testSubjects() {
+            fetch('test.php?path=subjects&token=test-token-123')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('subjectsResult').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            });
+        }
+    </script>
+</body>
+</html>
